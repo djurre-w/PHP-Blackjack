@@ -48,7 +48,25 @@ class Dealer
                 }
             } while ($this->gameStops == false);
             if ($this->gameStops == true) {
+                $topscore = 0;
+                $winners = [];
                 foreach ($this->players as $player) {
+                    $score = $this->blackjack->scoreHand($player->hand());
+                    if (is_numeric($score) && $score > $topscore && $score <= 21) {
+                        $topscore = $score;
+                        $winners = [$player->name()];
+                    } elseif (is_numeric($score) && $score == $topscore && $score <= 21) {
+                        $winners[] = $player->name();
+                    }
+                }
+                if (!empty($winners)) {
+                    echo "Winner(s): " . implode(', ', $winners) . " with score: $topscore" . PHP_EOL;
+                } else {
+                    echo "No winners this round." . PHP_EOL;
+                }
+                foreach ($this->players as $player) {
+                    if (is_numeric($this->blackjack->scoreHand($player->hand()))) {
+                    }
                     echo $player->showHand() . " -> " . $this->blackjack->scoreHand($player->hand()) . PHP_EOL;
                 }
                 exit;
@@ -89,10 +107,12 @@ class Dealer
                 if (!isset($this->playerStops[$player->name()])) {
                     $and = readline($player->name() . "'s turn. You have: " . $player->showHand() . " Draw (D) or Stop (S): ");
                     $inputCheck = $this->checkInput($and, $player);
-                    if ($inputCheck == false) {
-                        $and = readline($player->name() . "'s turn. You have: " . $player->showHand() . " Draw (D) or Stop (S): ");
-                        $inputCheck = $this->checkInput($and, $player);
-                    }
+                    do {
+                        if ($inputCheck != true) {
+                            $and = readline($player->name() . "'s turn. You have: " . $player->showHand() . " Draw (D) or Stop (S): ");
+                            $inputCheck = $this->checkInput($and, $player);
+                        }
+                    } while ($inputCheck != true);
                 }
             }
         }
