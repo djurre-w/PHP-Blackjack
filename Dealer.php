@@ -52,11 +52,26 @@ class Dealer
                 $winners = [];
                 foreach ($this->players as $player) {
                     $score = $this->blackjack->scoreHand($player->hand());
-                    if (is_numeric($score) && $score > $topscore && $score <= 21) {
-                        $topscore = $score;
-                        $winners = [$player->name()];
-                    } elseif (is_numeric($score) && $score == $topscore && $score <= 21) {
-                        $winners[] = $player->name();
+
+                    switch ($score) {
+                        case "Blackjack!":
+                            $winners = [$player->name()];
+                            $topscore = "Blackjack!";
+                            break;
+                        case "Five Card Charlie!":
+                            $winners = [$player->name()];
+                            $topscore = "Five Card Charlie!";
+                            break;
+                        case is_numeric($score) && $score > $topscore && $score <= 21:
+                            $topscore = $score;
+                            $winners = [$player->name()];
+                            break;
+                        case is_numeric($score) && $score == $topscore && $score <= 21:
+                            $winners[] = $player->name();
+                            break;
+
+                        default:
+                            break;
                     }
                 }
                 if (!empty($winners)) {
