@@ -1,0 +1,134 @@
+<?php
+
+class Dealer
+{
+    private Blackjack $blackjack;
+    private Deck $deck;
+    private array $players;
+    private array $playerStops;
+    private bool $gameStops = false;
+
+    function __construct(Blackjack $blackjack, Deck $deck)
+    {
+        $this->blackjack = $blackjack;
+        $this->deck = $deck;
+        $this->playerStops = [];
+        $this->players[] = new Player('Dealer');
+    }
+
+    function addPlayer(Player $player): void
+    {
+        $this->players[] = $player;
+    }
+
+    function playGame()
+    {
+        foreach ($this->players as $player) {
+            for ($i = 0; $i < 2; $i++) {
+                $player->addCard($this->deck->drawCard());
+            }
+
+            if ($this->blackjack->scoreHand($player->hand()) == "Blackjack!") {
+                $this->gameStops = true;
+                echo $player->name() . " Has won!!" . PHP_EOL;
+            }
+        }
+
+        if ($this->gameStops == true) {
+            foreach ($this->players as $player) {
+                echo $player->showHand() . " -> " . $this->blackjack->scoreHand($player->hand()) . PHP_EOL;
+            }
+            exit;
+        } else {
+            do {
+                if (count($this->playerStops) == count($this->players)) {
+                    $this->gameStops = true;
+                } else {
+                    $this->dealMore();
+                }
+            } while ($this->gameStops == false);
+            if ($this->gameStops == true) {
+                foreach ($this->players as $player) {
+                    echo $player->showHand() . " -> " . $this->blackjack->scoreHand($player->hand()) . PHP_EOL;
+                }
+                exit;
+            }
+        }
+    }
+
+    private function dealMore()
+    {
+        foreach ($this->players as $player) {
+            if ($player->name() == "Dealer") {
+                if ($this->blackjack->scoreHand($player->hand()) < 18 && !isset($this->playerStops["Dealer"])) {
+                    echo $player->showHand() . PHP_EOL;
+                    echo $player->name() . " drew: " . $player->addCard($this->deck->drawCard()) . PHP_EOL;
+
+                    switch ($this->blackjack->scoreHand($player->hand())) {
+                        case "Blackjack!":
+                            $this->gameStops = true;
+                            echo $player->name() . " Has won!!" . PHP_EOL;
+                            break;
+                        case "Busted!":
+                            $this->playerStops[$player->name()] = "Busted";
+                            break;
+                        case "Five Card Charlie!":
+                            $this->gameStops = true;
+                            echo $player->name() . " Has won!!" . PHP_EOL;
+                            break;
+
+                        default:
+                            break;
+                    }
+                } else {
+                    echo $player->showHand();
+                    echo "Dealer Foldes" . PHP_EOL;
+                    $this->playerStops[$player->name()] = "Folded";
+                }
+            } else {
+                if (!isset($this->playerStops[$player->name()])) {
+                    $and = readline($player->name() . "'s turn. You have: " . $player->showHand() . " Draw (D) or Stop (S): ");
+                    $inputCheck = $this->checkInput($and, $player);
+                    if ($inputCheck == false) {
+                        $and = readline($player->name() . "'s turn. You have: " . $player->showHand() . " Draw (D) or Stop (S): ");
+                        $inputCheck = $this->checkInput($and, $player);
+                    }
+                }
+            }
+        }
+    }
+
+    private function checkInput($input, $player)
+    {
+        if (strtoupper($input) == "D") {
+            echo $player->name() . " drew: " . $player->addCard($this->deck->drawCard()) . PHP_EOL;
+
+            switch ($this->blackjack->scoreHand($player->hand())) {
+                case "Blackjack!":
+                    $this->gameStops = true;
+                    echo $player->name() . " Has won!!" . PHP_EOL;
+                    return true;
+                    break;
+                case "Busted!":
+                    $this->playerStops[$player->name()] = "Busted";
+                    return true;
+                    break;
+                case "Five Card Charlie!":
+                    $this->gameStops = true;
+                    echo $player->name() . " Has won!!" . PHP_EOL;
+                    return true;
+                    break;
+
+                default:
+                    return true;
+                    break;
+            }
+        } else if (strtoupper($input) == "S") {
+            $this->playerStops[$player->name()] = "Folded";
+            return true;
+        } else {
+            echo strtoupper($input) . " is not a valid input!" . PHP_EOL;
+            return false;
+        }
+    }
+}
